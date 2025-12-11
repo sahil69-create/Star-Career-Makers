@@ -1,4 +1,4 @@
-const APP_SCRIPT_URL='https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec';
+const APP_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwVcItCVXT8In-Y3NPX-eKgDOU3c9bMc6IypCCL3tjOm9LHjsSjKNCNP2BrjQg4mqCK9A/exec';
 
 const navToggle=document.querySelector('.nav-toggle');
 const nav=document.querySelector('.nav');
