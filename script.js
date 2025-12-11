@@ -1,4 +1,15 @@
-const APP_SCRIPT_URL='https://script.google.com/macros/s/AKfycbwVcItCVXT8In-Y3NPX-eKgDOU3c9bMc6IypCCL3tjOm9LHjsSjKNCNP2BrjQg4mqCK9A/exec';
+const firebaseConfig={
+  apiKey:"REPLACE",
+  authDomain:"REPLACE.firebaseapp.com",
+  projectId:"REPLACE",
+  storageBucket:"REPLACE.appspot.com",
+  messagingSenderId:"REPLACE",
+  appId:"REPLACE"
+};
+
+firebase.initializeApp(firebaseConfig);
+const storage=firebase.storage();
+const db=firebase.firestore();
 
 const navToggle=document.querySelector('.nav-toggle');
 const nav=document.querySelector('.nav');
@@ -28,7 +39,31 @@ function applyFilters(){const fLoc=filterLocation?filterLocation.value:'';const 
 const track=document.querySelector('.carousel-track');
 if(track){const slides=Array.from(track.children);let index=0;function updateCarousel(){if(!slides.length)return;const w=slides[0].getBoundingClientRect().width+20;track.style.transform=`translateX(-${index*w}px)`}function nextSlide(){index=(index+1)%slides.length;updateCarousel()}function prevSlide(){index=(index-1+slides.length)%slides.length;updateCarousel()}const nextBtn=document.querySelector('.carousel-next');const prevBtn=document.querySelector('.carousel-prev');if(nextBtn)nextBtn.addEventListener('click',nextSlide);if(prevBtn)prevBtn.addEventListener('click',prevSlide);setInterval(nextSlide,4000)}
 
-async function toBase64(file){return await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=reject;r.readAsDataURL(file)});}
-
 const contactForm=document.getElementById('contactForm');
-if(contactForm){contactForm.addEventListener('submit',async e=>{e.preventDefault();const name=document.getElementById('name').value.trim();const phone=document.getElementById('phone').value.trim();const email=document.getElementById('email').value.trim();const message=document.getElementById('message').value.trim();const fileInput=document.getElementById('resume');const file=fileInput&&fileInput.files&&fileInput.files[0]?fileInput.files[0]:null;if(!name||!phone||!email||!message){alert('Please fill all fields');return}let resumeName='';let resumeType='';let resumeBase64='';if(file){resumeName=file.name;resumeType=file.type||'application/octet-stream';resumeBase64=await toBase64(file)}const body=new FormData();body.append('name',name);body.append('phone',phone);body.append('email',email);body.append('message',message);if(resumeBase64){body.append('resumeName',resumeName);body.append('resumeType',resumeType);body.append('resumeBase64',resumeBase64)}try{const useNoCors=window.location.protocol==='file:';const opts=useNoCors?{method:'POST',body,mode:'no-cors'}:{method:'POST',body};const res=await fetch(APP_SCRIPT_URL,opts);if(useNoCors){alert('Thank you! Your message has been recorded.');contactForm.reset();return}if(res.ok){const json=await res.json();alert('Thank you! Your message has been recorded.');contactForm.reset();}else{alert('Submission failed. Please try again.')}}catch(err){alert('Network error. Please try again later.')}})}
+if(contactForm){contactForm.addEventListener('submit',async e=>{e.preventDefault();
+  const name=document.getElementById('name').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const message=document.getElementById('message').value.trim();
+  const fileInput=document.getElementById('resume');
+  const file=fileInput&&fileInput.files&&fileInput.files[0]?fileInput.files[0]:null;
+
+  if(!name||!phone||!email||!message){alert('Please fill all fields');return}
+
+  let resumeURL='';
+  if(file){
+    const path=`resumes/${Date.now()}_${file.name}`;
+    const ref=storage.ref().child(path);
+    await ref.put(file);
+    resumeURL=await ref.getDownloadURL();
+  }
+
+  await db.collection('applications').add({
+    timestamp:Date.now(),
+    name,phone,email,message,
+    resumeURL
+  });
+
+  alert('Thank you! Your message has been recorded.');
+  contactForm.reset();
+})}
